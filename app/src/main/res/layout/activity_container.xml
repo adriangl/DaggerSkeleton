@@ -4,6 +4,30 @@
     android:id="@+id/root_frame"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="com.bq.cameraskeleton.sample.MainActivity">
+    tools:context="com.bq.daggerskeleton.common.MainActivity">
+
+    <FrameLayout
+        android:id="@+id/camera_frame"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        tools:background="@android:color/holo_green_dark"/>
+
+    <FrameLayout
+        android:id="@+id/shutter_area_frame"
+        android:layout_width="match_parent"
+        android:layout_height="150dp"
+        android:layout_gravity="bottom"
+        android:background="@android:color/holo_blue_dark">
+
+        <FrameLayout
+            android:id="@+id/shutter_button_frame"
+            android:layout_width="150dp"
+            android:layout_height="150dp"
+            android:layout_gravity="center_horizontal"
+            android:background="@android:color/darker_gray">
+
+        </FrameLayout>
+
+    </FrameLayout>
 
 </FrameLayout>

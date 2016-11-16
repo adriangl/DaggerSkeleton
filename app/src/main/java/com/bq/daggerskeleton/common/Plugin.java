@@ -8,7 +8,6 @@ import android.view.KeyEvent;
 import android.view.MotionEvent;
 
 
-
 public interface Plugin {
 
     PluginProperties getProperties();
@@ -20,14 +19,14 @@ public interface Plugin {
      * Most components can ignore this method if they ignore configuration changes and
      * do every logic during {@link #onCreate(Bundle)}
      */
-    void onCreateView();
+    void onCreateDynamicView();
 
     void onPostCreate();
 
     /**
      * All the components have completed their onCreate method, it's safe to reference external views.
      */
-    void onComponentsCreated();
+    void onPluginsCreated();
 
     void onSaveInstanceState(@NonNull Bundle outState);
 
@@ -53,7 +52,7 @@ public interface Plugin {
 
     /**
      * Called during {@link #onConfigurationChanged(Configuration)}, this call is always
-     * followed by a {@link #onCreateView()}
+     * followed by a {@link #onCreateDynamicView()}
      */
-    void onDestroyView();
+    void onDestroyDynamicView();
 }

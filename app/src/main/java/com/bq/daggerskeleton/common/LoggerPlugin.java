@@ -43,7 +43,9 @@ import io.reactivex.Observer;
 import io.reactivex.Single;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.functions.Consumer;
+import io.reactivex.processors.PublishProcessor;
 import io.reactivex.schedulers.Schedulers;
+import io.reactivex.subjects.PublishSubject;
 import timber.log.Timber;
 
 import static android.util.Log.DEBUG;
@@ -52,7 +54,6 @@ import static android.util.Log.INFO;
 import static android.util.Log.WARN;
 import static android.util.Log.d;
 import static android.util.Log.e;
-import static java.security.AccessController.getContext;
 
 @PluginScope
 public final class LoggerPlugin extends SimplePlugin {
@@ -109,7 +110,7 @@ public final class LoggerPlugin extends SimplePlugin {
    }
 
    @Override
-   public void onComponentsCreated() {
+   public void onPluginsCreated() {
       scanComponentsAndSubscribe(true);
    }
 
@@ -203,6 +204,8 @@ public final class LoggerPlugin extends SimplePlugin {
                   disposable = ((Single) pluginField).observeOn(Schedulers.io()).subscribe(consumer, consumer);
                } else if (pluginField instanceof Maybe) {
                   disposable = ((Maybe) pluginField).observeOn(Schedulers.io()).subscribe(consumer, consumer);
+               } else if (pluginField instanceof PublishProcessor) {
+                  disposable = ((PublishSubject) pluginField).observeOn(Schedulers.io()).subscribe(consumer, consumer);
                }
 
                if (disposable != null) {
@@ -233,12 +236,12 @@ public final class LoggerPlugin extends SimplePlugin {
       if (savedInstanceState == null) {
          String logFileName = String.format("%s-%s.log", "camera", FILE_NAME_DATE_FORMAT.format(new Date()));
          logFile = new File(logRootDirectory, logFileName);
-         d(TAG, "New session, logs will be stored in: " + logFile.getAbsolutePath());
+         d(TAG, "New cameraSession, logs will be stored in: " + logFile.getAbsolutePath());
       } else {
          String logFileName = savedInstanceState.getString(STATE_LOG_FILE);
          if (logFileName != null) {
             logFile = new File(logFileName);
-            d(TAG, "Resumed session, logs will be stored in: " + logFile.getAbsolutePath());
+            d(TAG, "Resumed cameraSession, logs will be stored in: " + logFile.getAbsolutePath());
          }
       }
 

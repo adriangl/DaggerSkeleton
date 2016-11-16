@@ -1,0 +1,19 @@
+package com.bq.daggerskeleton.camera.rotation;
+
+
+import com.bq.daggerskeleton.flux.Action;
+
+public final class DeviceRotatedAction implements Action {
+    public final int deviceAccumulatedRotation;
+
+    public DeviceRotatedAction(int deviceAccumulatedRotation) {
+        this.deviceAccumulatedRotation = deviceAccumulatedRotation;
+    }
+
+    @Override
+    public String toString() {
+        return "DeviceRotatedAction{" +
+                "deviceAccumulatedRotation=" + deviceAccumulatedRotation +
+                '}';
+    }
+}
