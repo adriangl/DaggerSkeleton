@@ -64,8 +64,8 @@ public class ShutterButtonPlugin extends SimplePlugin implements View.OnClickLis
         track(cameraStore.flowable()
                 .subscribe(new Consumer<CameraState>() {
                     @Override
-                    public void accept(CameraState cameraState) throws Exception {
-                        // TODO: 15/11/16 enable or disable button when needed
+                    public void accept(CameraState state) throws Exception {
+                        shutterButton.setEnabled(!state.takingPhoto);
                     }
                 }));
     }

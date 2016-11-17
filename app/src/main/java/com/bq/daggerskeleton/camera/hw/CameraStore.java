@@ -25,6 +25,7 @@ import com.bq.daggerskeleton.camera.permissions.PermissionChangedAction;
 import com.bq.daggerskeleton.camera.preview.CameraPreviewAvailableAction;
 import com.bq.daggerskeleton.camera.preview.CameraPreviewDestroyedAction;
 import com.bq.daggerskeleton.camera.rotation.RotationStore;
+import com.bq.daggerskeleton.camera.storage.CaptureSavedAction;
 import com.bq.daggerskeleton.camera.ui.TakePictureAction;
 import com.bq.daggerskeleton.flux.Dispatcher;
 import com.bq.daggerskeleton.flux.Store;
@@ -126,7 +127,11 @@ public class CameraStore extends Store<CameraState> {
         Dispatcher.subscribe(CameraSessionOpenedAction.class, new Consumer<CameraSessionOpenedAction>() {
             @Override
             public void accept(CameraSessionOpenedAction action) throws Exception {
-                setState(configSessionForPreview(action.cameraSession));
+                CameraState newState = new CameraState(state());
+                newState.cameraSession = action.cameraSession;
+                setState(newState);
+
+                configSessionForPreview();
             }
         });
 
@@ -135,8 +140,22 @@ public class CameraStore extends Store<CameraState> {
             @Override
             public void accept(TakePictureAction action) throws Exception {
                 // Configure camera for captures
-                // TODO: 15/11/16 Change state (How? dunno...)
+                CameraState newState = new CameraState(state());
+                newState.takingPhoto = true;
+                setState(newState);
+
                 takePicture();
+            }
+        });
+
+        // Listen to camera shutter events so we can take a picture
+        Dispatcher.subscribe(CaptureSavedAction.class, new Consumer<CaptureSavedAction>() {
+            @Override
+            public void accept(CaptureSavedAction action) throws Exception {
+                // Configure camera for captures
+                CameraState newState = new CameraState(state());
+                newState.takingPhoto = false;
+                setState(newState);
             }
         });
 
@@ -232,7 +251,7 @@ public class CameraStore extends Store<CameraState> {
 
                         @Override
                         public void onConfigureFailed(CameraCaptureSession session) {
-                            Dispatcher.dispatch(new CameraSessionFailed(session));
+                            Dispatcher.dispatch(new CameraSessionFailedAction(session));
                         }
                     }, null);
         } catch (CameraAccessException e) {
@@ -240,7 +259,13 @@ public class CameraStore extends Store<CameraState> {
         }
     }
 
-    private CameraState configSessionForPreview(CameraCaptureSession cameraSession) {
+    private void configSessionForPreview() {
+        if (state().previewSurface == null)
+            return; // TODO: 17/11/16 Should we return an exception here?
+        if (state().cameraDevice == null)
+            return; // TODO: 17/11/16 Should we return an exception here?
+        if (state().cameraSession == null)
+            return; // TODO: 17/11/16 Should we return an exception here?
 
         try {
             CaptureRequest.Builder builder = state().cameraDevice
@@ -249,7 +274,7 @@ public class CameraStore extends Store<CameraState> {
             // Only add preview surface so we don't spam image reader
             builder.addTarget(state().previewSurface);
 
-            cameraSession.setRepeatingRequest(
+            state().cameraSession.setRepeatingRequest(
                     builder.build(),
                     null,
                     null);
@@ -257,11 +282,6 @@ public class CameraStore extends Store<CameraState> {
         } catch (CameraAccessException e) {
             e.printStackTrace();
         }
-
-        CameraState newState = new CameraState(state());
-        newState.cameraSession = cameraSession;
-
-        return newState;
     }
 
     private void takePicture() {
@@ -336,8 +356,9 @@ public class CameraStore extends Store<CameraState> {
             if (state().previewSurface != null) {
                 state().previewSurface.release();
             }
-        } catch (CameraAccessException e) {
+        } catch (CameraAccessException | IllegalStateException e) {
             e.printStackTrace();
+            // TODO: 17/11/16 Do something with the exception?
         }
 
         CameraState newState = new CameraState(initialState());

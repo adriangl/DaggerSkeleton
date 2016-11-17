@@ -10,4 +10,11 @@ public class CameraSessionOpenedAction implements Action {
     public CameraSessionOpenedAction(CameraCaptureSession cameraSession) {
         this.cameraSession = cameraSession;
     }
+
+    @Override
+    public String toString() {
+        return "CameraSessionOpenedAction{" +
+                "cameraSession=" + cameraSession +
+                '}';
+    }
 }

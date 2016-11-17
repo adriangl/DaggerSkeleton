@@ -15,4 +15,13 @@ public class CameraPreviewAvailableAction implements Action {
         this.previewWidth = previewWidth;
         this.previewHeight = previewHeight;
     }
+
+    @Override
+    public String toString() {
+        return "CameraPreviewAvailableAction{" +
+                "previewSurface=" + previewSurface +
+                ", previewWidth=" + previewWidth +
+                ", previewHeight=" + previewHeight +
+                '}';
+    }
 }

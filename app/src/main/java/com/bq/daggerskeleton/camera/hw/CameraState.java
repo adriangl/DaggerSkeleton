@@ -18,6 +18,7 @@ public class CameraState {
     public ImageReader imageReader;
     public CameraDevice cameraDevice;
     public CameraCaptureSession cameraSession;
+    public boolean takingPhoto;
 
     public CameraState() {
 
@@ -33,6 +34,23 @@ public class CameraState {
         this.imageReader = other.imageReader;
         this.cameraDevice = other.cameraDevice;
         this.cameraSession = other.cameraSession;
+        this.takingPhoto = other.takingPhoto;
+    }
+
+    @Override
+    public String toString() {
+        return "CameraState{" +
+                "hasCameraPermission=" + hasCameraPermission +
+                ", previewSurface=" + previewSurface +
+                ", previewAspectRatio=" + previewAspectRatio +
+                ", cameraId='" + cameraId + '\'' +
+                ", cameraResolutionList=" + Arrays.toString(cameraResolutionList) +
+                ", rotation=" + rotation +
+                ", imageReader=" + imageReader +
+                ", cameraDevice=" + cameraDevice +
+                ", cameraSession=" + cameraSession +
+                ", takingPhoto=" + takingPhoto +
+                '}';
     }
 
     @Override
@@ -44,6 +62,7 @@ public class CameraState {
 
         if (hasCameraPermission != that.hasCameraPermission) return false;
         if (rotation != that.rotation) return false;
+        if (takingPhoto != that.takingPhoto) return false;
         if (previewSurface != null ? !previewSurface.equals(that.previewSurface) : that.previewSurface != null)
             return false;
         if (previewAspectRatio != null ? !previewAspectRatio.equals(that.previewAspectRatio) : that.previewAspectRatio != null)
@@ -71,21 +90,7 @@ public class CameraState {
         result = 31 * result + (imageReader != null ? imageReader.hashCode() : 0);
         result = 31 * result + (cameraDevice != null ? cameraDevice.hashCode() : 0);
         result = 31 * result + (cameraSession != null ? cameraSession.hashCode() : 0);
+        result = 31 * result + (takingPhoto ? 1 : 0);
         return result;
-    }
-
-    @Override
-    public String toString() {
-        return "CameraState{" +
-                "hasCameraPermission=" + hasCameraPermission +
-                ", previewSurface=" + previewSurface +
-                ", previewAspectRatio=" + previewAspectRatio +
-                ", cameraId='" + cameraId + '\'' +
-                ", cameraResolutionList=" + Arrays.toString(cameraResolutionList) +
-                ", rotation=" + rotation +
-                ", imageReader=" + imageReader +
-                ", cameraDevice=" + cameraDevice +
-                ", cameraSession=" + cameraSession +
-                '}';
     }
 }

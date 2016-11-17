@@ -10,4 +10,11 @@ public class CameraDisconnectedAction implements Action {
     public CameraDisconnectedAction(CameraDevice camera) {
         this.camera = camera;
     }
+
+    @Override
+    public String toString() {
+        return "CameraDisconnectedAction{" +
+                "camera=" + camera +
+                '}';
+    }
 }

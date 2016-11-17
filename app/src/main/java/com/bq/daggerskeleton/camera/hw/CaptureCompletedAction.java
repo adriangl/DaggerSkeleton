@@ -10,4 +10,11 @@ public class CaptureCompletedAction implements Action {
     public CaptureCompletedAction(TotalCaptureResult result) {
         this.result = result;
     }
+
+    @Override
+    public String toString() {
+        return "CaptureCompletedAction{" +
+                "result=" + result +
+                '}';
+    }
 }

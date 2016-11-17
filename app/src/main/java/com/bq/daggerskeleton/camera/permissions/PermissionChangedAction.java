@@ -8,4 +8,11 @@ public class PermissionChangedAction implements Action {
     public PermissionChangedAction(boolean granted) {
         this.granted = granted;
     }
+
+    @Override
+    public String toString() {
+        return "PermissionChangedAction{" +
+                "granted=" + granted +
+                '}';
+    }
 }

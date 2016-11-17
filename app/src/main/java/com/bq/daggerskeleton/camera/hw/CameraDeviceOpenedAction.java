@@ -13,4 +13,12 @@ public class CameraDeviceOpenedAction implements Action {
         this.cameraDevice = cameraDevice;
         this.imageReader = imageReader;
     }
+
+    @Override
+    public String toString() {
+        return "CameraDeviceOpenedAction{" +
+                "cameraDevice=" + cameraDevice +
+                ", imageReader=" + imageReader +
+                '}';
+    }
 }

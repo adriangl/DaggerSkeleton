@@ -37,7 +37,7 @@ import io.reactivex.schedulers.Schedulers;
 public class StorageStore extends Store<StorageState> {
 
     private static final SimpleDateFormat fileNameDateFormat =
-            new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault());
+            new SimpleDateFormat("yyyyMMdd_HHmmss_SSS", Locale.getDefault());
 
     private final File cameraFilesRootDirectory;
     private final ContentResolver contentResolver;
@@ -142,8 +142,11 @@ public class StorageStore extends Store<StorageState> {
 
         Uri fileUri = contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
 
-        return fileUri.toString();
-
+        if (fileUri != null) {
+            return fileUri.toString();
+        } else {
+            return null;
+        }
     }
 
     @Override

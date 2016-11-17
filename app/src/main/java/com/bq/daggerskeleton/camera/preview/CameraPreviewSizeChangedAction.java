@@ -10,4 +10,12 @@ public class CameraPreviewSizeChangedAction implements Action {
         this.width = width;
         this.height = height;
     }
+
+    @Override
+    public String toString() {
+        return "CameraPreviewSizeChangedAction{" +
+                "width=" + width +
+                ", height=" + height +
+                '}';
+    }
 }

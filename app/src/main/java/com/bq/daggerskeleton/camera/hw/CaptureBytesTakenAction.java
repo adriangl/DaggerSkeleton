@@ -8,4 +8,11 @@ public class CaptureBytesTakenAction implements Action {
     public CaptureBytesTakenAction(byte[] imageBytes) {
         this.imageBytes = imageBytes;
     }
+
+    @Override
+    public String toString() {
+        return "CaptureBytesTakenAction{" +
+                "imageBytes=[" + imageBytes.length + "]" +
+                '}';
+    }
 }

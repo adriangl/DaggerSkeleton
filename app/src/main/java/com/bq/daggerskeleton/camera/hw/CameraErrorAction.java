@@ -10,4 +10,11 @@ public class CameraErrorAction implements Action {
     public CameraErrorAction(CameraDevice camera) {
         this.camera = camera;
     }
+
+    @Override
+    public String toString() {
+        return "CameraErrorAction{" +
+                "camera=" + camera +
+                '}';
+    }
 }

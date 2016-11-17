@@ -8,4 +8,11 @@ public class CaptureSavedAction implements Action {
     public CaptureSavedAction(String newFileUri) {
         this.newFileUri = newFileUri;
     }
+
+    @Override
+    public String toString() {
+        return "CaptureSavedAction{" +
+                "newFileUri='" + newFileUri + '\'' +
+                '}';
+    }
 }
