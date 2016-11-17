@@ -55,6 +55,7 @@ public class CameraStore extends Store<CameraState> {
             }
         });
 
+        // Received an action to open the camera in the needed mode
         Dispatcher.subscribe(OpenCameraAction.class, new Consumer<OpenCameraAction>() {
             @Override
             public void accept(OpenCameraAction action) throws Exception {
@@ -232,6 +233,9 @@ public class CameraStore extends Store<CameraState> {
             }
             if (state().previewSurface != null) {
                 state().previewSurface.release();
+            }
+            if (state().targetSurface != null) {
+                state().targetSurface.release();
             }
         } catch (CameraAccessException | IllegalStateException e) {
             e.printStackTrace();

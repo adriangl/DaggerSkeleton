@@ -58,6 +58,7 @@ public class PhotoStore extends Store<PhotoState> {
             public void accept(TakePictureAction takePictureAction) throws Exception {
                 PhotoState newState = new PhotoState(state());
                 newState.isTakingPhoto = true;
+
                 setState(newState);
 
                 takePicture();
@@ -124,6 +125,8 @@ public class PhotoStore extends Store<PhotoState> {
             jpegRequest.set(CaptureRequest.CONTROL_AE_MODE, CameraMetadata.CONTROL_AE_ANTIBANDING_MODE_AUTO);
             // Get rotation from state
             jpegRequest.set(CaptureRequest.JPEG_ORIENTATION, getJpegOrientation());
+            // Full quality
+            jpegRequest.set(CaptureRequest.JPEG_QUALITY, (byte)100);
 
             cameraStore.state().cameraSession.capture(jpegRequest.build(), new CameraCaptureSession.CaptureCallback() {
                 @Override
