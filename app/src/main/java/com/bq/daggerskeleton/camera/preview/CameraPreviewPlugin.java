@@ -19,8 +19,8 @@ import com.bq.daggerskeleton.common.SimplePlugin;
 import com.bq.daggerskeleton.dagger.PluginScope;
 import com.bq.daggerskeleton.flux.Dispatcher;
 
-import java.util.Arrays;
 import java.util.Collections;
+import java.util.List;
 
 import javax.inject.Inject;
 
@@ -87,12 +87,11 @@ public class CameraPreviewPlugin extends SimplePlugin {
     }
 
     private Size configureTextureView() {
-        Size[] currentCameraResolutions = cameraStore.state().cameraResolutionList;
-
+        List<Size> currentCameraResolutions = cameraStore.state().cameraDescription.jpegOutputSizes;
         Size aspectRatio = cameraStore.state().previewAspectRatio;
 
         Size captureSize = Collections.max(
-                Arrays.asList(currentCameraResolutions),
+                currentCameraResolutions,
                 new PreviewUtil.CompareSizesByArea());
 
         Size bufferSize = PreviewUtil.chooseOptimalSize(

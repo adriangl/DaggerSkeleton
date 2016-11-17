@@ -1,22 +1,12 @@
 package com.bq.daggerskeleton.camera.hw;
 
 import android.content.Context;
-import android.graphics.ImageFormat;
 import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCaptureSession;
-import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraDevice;
 import android.hardware.camera2.CameraManager;
-import android.hardware.camera2.CameraMetadata;
-import android.hardware.camera2.CaptureFailure;
 import android.hardware.camera2.CaptureRequest;
-import android.hardware.camera2.TotalCaptureResult;
-import android.hardware.camera2.params.StreamConfigurationMap;
-import android.media.Image;
-import android.media.ImageReader;
-import android.support.annotation.NonNull;
 import android.util.Log;
-import android.util.Size;
 
 import com.bq.daggerskeleton.App;
 import com.bq.daggerskeleton.AppScope;
@@ -24,13 +14,9 @@ import com.bq.daggerskeleton.camera.InitAction;
 import com.bq.daggerskeleton.camera.permissions.PermissionChangedAction;
 import com.bq.daggerskeleton.camera.preview.CameraPreviewAvailableAction;
 import com.bq.daggerskeleton.camera.preview.CameraPreviewDestroyedAction;
-import com.bq.daggerskeleton.camera.rotation.RotationStore;
-import com.bq.daggerskeleton.camera.storage.CaptureSavedAction;
-import com.bq.daggerskeleton.camera.ui.TakePictureAction;
 import com.bq.daggerskeleton.flux.Dispatcher;
 import com.bq.daggerskeleton.flux.Store;
 
-import java.nio.ByteBuffer;
 import java.util.Arrays;
 
 import javax.inject.Inject;
@@ -45,12 +31,10 @@ import static com.bq.daggerskeleton.camera.preview.AutoFitTextureView.PREVIEW_4_
 public class CameraStore extends Store<CameraState> {
 
     private final CameraManager cameraManager;
-    private final RotationStore rotationStore;
 
     @Inject
-    public CameraStore(App app, RotationStore rotationStore) {
+    public CameraStore(App app) {
         this.cameraManager = (CameraManager) app.getSystemService(Context.CAMERA_SERVICE);
-        this.rotationStore = rotationStore;
 
         // Init needed variables
         Dispatcher.subscribe(InitAction.class, new Consumer<InitAction>() {
@@ -75,14 +59,13 @@ public class CameraStore extends Store<CameraState> {
             @Override
             public void accept(OpenCameraAction action) throws Exception {
                 if (!state().hasCameraPermission) return;
-                if (state().cameraId == null) return;
+                if (state().cameraDescription == null) return;
 
                 //noinspection MissingPermission
-                cameraManager.openCamera(state().cameraId, new CameraDevice.StateCallback() {
+                cameraManager.openCamera(state().cameraDescription.id, new CameraDevice.StateCallback() {
                     @Override
                     public void onOpened(CameraDevice camera) {
-                        ImageReader imageReader = createImageReader();
-                        Dispatcher.dispatch(new CameraDeviceOpenedAction(camera, imageReader));
+                        Dispatcher.dispatch(new CameraDeviceOpenedAction(camera));
                     }
 
                     @Override
@@ -110,13 +93,24 @@ public class CameraStore extends Store<CameraState> {
             }
         });
 
+        // When a target surface is available, try to open the session
+        Dispatcher.subscribe(CaptureTargetSurfaceReadyAction.class, new Consumer<CaptureTargetSurfaceReadyAction>() {
+            @Override
+            public void accept(CaptureTargetSurfaceReadyAction action) throws Exception {
+                CameraState newState = new CameraState(state());
+                newState.targetSurface = action.targetSurface;
+                setState(newState);
+
+                tryToOpenSession();
+            }
+        });
+
         // If a camera device is opened, try to open a camera session for preview
         Dispatcher.subscribe(CameraDeviceOpenedAction.class, new Consumer<CameraDeviceOpenedAction>() {
             @Override
             public void accept(CameraDeviceOpenedAction action) throws Exception {
                 CameraState newState = new CameraState(state());
                 newState.cameraDevice = action.cameraDevice;
-                newState.imageReader = action.imageReader;
                 setState(newState);
 
                 tryToOpenSession();
@@ -132,30 +126,6 @@ public class CameraStore extends Store<CameraState> {
                 setState(newState);
 
                 configSessionForPreview();
-            }
-        });
-
-        // Listen to camera shutter events so we can take a picture
-        Dispatcher.subscribe(TakePictureAction.class, new Consumer<TakePictureAction>() {
-            @Override
-            public void accept(TakePictureAction action) throws Exception {
-                // Configure camera for captures
-                CameraState newState = new CameraState(state());
-                newState.takingPhoto = true;
-                setState(newState);
-
-                takePicture();
-            }
-        });
-
-        // Listen to camera shutter events so we can take a picture
-        Dispatcher.subscribe(CaptureSavedAction.class, new Consumer<CaptureSavedAction>() {
-            @Override
-            public void accept(CaptureSavedAction action) throws Exception {
-                // Configure camera for captures
-                CameraState newState = new CameraState(state());
-                newState.takingPhoto = false;
-                setState(newState);
             }
         });
 
@@ -187,18 +157,9 @@ public class CameraStore extends Store<CameraState> {
 
         try {
             String mainCameraId = cameraManager.getCameraIdList()[0];
-            Size[] photoSizes = null;
-
-            StreamConfigurationMap streamConfigurationMap = cameraManager.getCameraCharacteristics(mainCameraId)
-                    .get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
-
-            if (streamConfigurationMap != null) {
-                photoSizes = streamConfigurationMap.getOutputSizes(ImageFormat.JPEG);
-            }
 
             CameraState newState = new CameraState(state());
-            newState.cameraId = mainCameraId;
-            newState.cameraResolutionList = photoSizes;
+            newState.cameraDescription = CameraDescription.from(mainCameraId, cameraManager.getCameraCharacteristics(mainCameraId));
 
             return newState;
 
@@ -209,40 +170,16 @@ public class CameraStore extends Store<CameraState> {
 
     }
 
-    @NonNull
-    private ImageReader createImageReader() {
-        // TODO: 15/11/16 Where the f*** should I create the ImageReader?
-        ImageReader imageReader = ImageReader.newInstance(
-                state().cameraResolutionList[0].getWidth(),
-                state().cameraResolutionList[0].getHeight(),
-                ImageFormat.JPEG,
-                2);
-
-        imageReader.setOnImageAvailableListener(new ImageReader.OnImageAvailableListener() {
-            @Override
-            public void onImageAvailable(ImageReader reader) {
-                try (final Image image = reader.acquireLatestImage()) {
-                    ByteBuffer buffer = image.getPlanes()[0].getBuffer();
-                    byte[] bytes = new byte[buffer.remaining()];
-                    buffer.get(bytes);
-                    Dispatcher.dispatch(new CaptureBytesTakenAction(bytes));
-                }
-            }
-        }, null);
-
-        return imageReader;
-    }
-
     private void tryToOpenSession() {
-        if (state().cameraSession != null)
-            return; // TODO: 15/11/16 Maybe we should open a new session if this is marked as closed or invalid, rather than checking for null values
+        if (state().cameraSession != null) return;
+
         if (state().cameraDevice == null) return;
         if (state().previewSurface == null) return;
-        if (state().imageReader == null) return;
+        if (state().targetSurface == null) return;
 
         try {
             state().cameraDevice.createCaptureSession(
-                    Arrays.asList(state().previewSurface, state().imageReader.getSurface()),
+                    Arrays.asList(state().previewSurface, state().targetSurface),
                     new CameraCaptureSession.StateCallback() {
                         @Override
                         public void onConfigured(CameraCaptureSession session) {
@@ -284,63 +221,6 @@ public class CameraStore extends Store<CameraState> {
         }
     }
 
-    private void takePicture() {
-        try {
-            final CaptureRequest.Builder jpegRequest = state().cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
-            // Render to our image reader:
-            jpegRequest.addTarget(state().imageReader.getSurface());
-            // Configure auto-focus (AF) and auto-exposure (AE) modes:
-            jpegRequest.set(CaptureRequest.CONTROL_AF_MODE, CameraMetadata.CONTROL_AF_MODE_AUTO);
-            jpegRequest.set(CaptureRequest.CONTROL_AE_MODE, CameraMetadata.CONTROL_AE_ANTIBANDING_MODE_AUTO);
-            // Get rotation from state
-            jpegRequest.set(CaptureRequest.JPEG_ORIENTATION, getJpegOrientation());
-
-            state().cameraSession.capture(jpegRequest.build(), new CameraCaptureSession.CaptureCallback() {
-                @Override
-                public void onCaptureCompleted(CameraCaptureSession session, CaptureRequest request, TotalCaptureResult result) {
-                    super.onCaptureCompleted(session, request, result);
-                    Dispatcher.dispatch(new CaptureCompletedAction(result));
-                }
-
-                @Override
-                public void onCaptureFailed(CameraCaptureSession session, CaptureRequest request, CaptureFailure failure) {
-                    super.onCaptureFailed(session, request, failure);
-                    // TODO: 15/11/16 Modify state? Send action?
-                }
-            }, null);
-        } catch (CameraAccessException e) {
-            e.printStackTrace();
-        }
-    }
-
-    private Integer getJpegOrientation() {
-        try {
-            CameraCharacteristics cameraCharacteristics = cameraManager
-                    .getCameraCharacteristics(state().cameraId);
-            boolean isFacingFront =
-                    Integer.valueOf(CameraCharacteristics.LENS_FACING_FRONT).equals
-                            (cameraCharacteristics.get(CameraCharacteristics.LENS_FACING));
-            int cameraDefaultOrientation = 0;
-            if (cameraCharacteristics.getKeys().contains(CameraCharacteristics
-                    .SENSOR_ORIENTATION)) {
-                //noinspection ConstantConditions
-                cameraDefaultOrientation = cameraCharacteristics.get(CameraCharacteristics.SENSOR_ORIENTATION);
-            }
-            // Round sensor orientation value
-            int roundedOrientation = ((rotationStore.state().deviceAbsoluteRotation) + 45) / 90 * 90;
-            int rotation;
-            if (isFacingFront) {
-                rotation = (cameraDefaultOrientation + roundedOrientation + 360) % 360;
-            } else {  // back-facing camera
-                rotation = (cameraDefaultOrientation - roundedOrientation) % 360;
-            }
-            return rotation;
-        } catch (CameraAccessException e) {
-            e.printStackTrace();
-            return 0;
-        }
-    }
-
     private CameraState releaseCameraResources() {
         try {
             if (state().cameraSession != null) {
@@ -349,9 +229,6 @@ public class CameraStore extends Store<CameraState> {
             }
             if (state().cameraDevice != null) {
                 state().cameraDevice.close();
-            }
-            if (state().imageReader != null) {
-                state().imageReader.close();
             }
             if (state().previewSurface != null) {
                 state().previewSurface.release();
@@ -364,8 +241,7 @@ public class CameraStore extends Store<CameraState> {
         CameraState newState = new CameraState(initialState());
         newState.hasCameraPermission = state().hasCameraPermission;
         newState.previewAspectRatio = state().previewAspectRatio;
-        newState.cameraId = state().cameraId;
-        newState.cameraResolutionList = state().cameraResolutionList;
+        newState.cameraDescription = state().cameraDescription;
 
         return newState;
     }

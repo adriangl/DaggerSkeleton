@@ -4,6 +4,7 @@ import android.app.Application;
 
 import com.bq.daggerskeleton.camera.hw.CameraComponent;
 import com.bq.daggerskeleton.camera.hw.CameraStore;
+import com.bq.daggerskeleton.camera.photo.PhotoStore;
 import com.bq.daggerskeleton.camera.rotation.RotationStore;
 import com.bq.daggerskeleton.camera.storage.StorageStore;
 import com.bq.daggerskeleton.common.MainActivity;
@@ -18,7 +19,8 @@ import dagger.Provides;
         AppComponent.Module.class,
         CameraStore.Module.class,
         StorageStore.Module.class,
-        RotationStore.Module.class
+        RotationStore.Module.class,
+        PhotoStore.Module.class,
 })
 @AppScope
 public interface AppComponent {

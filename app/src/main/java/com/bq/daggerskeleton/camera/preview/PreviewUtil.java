@@ -26,12 +26,12 @@ public class PreviewUtil {
      * @param aspectRatio       The aspect ratio
      * @return The optimal {@code Size}, or an arbitrary one if none were big enough
      */
-    public static Size chooseOptimalSize(Size[] choices, int textureViewWidth,
-                                          int textureViewHeight, int maxWidth, int maxHeight, Size aspectRatio) {
+    public static Size chooseOptimalSize(List<Size> choices, int textureViewWidth,
+                                         int textureViewHeight, int maxWidth, int maxHeight, Size aspectRatio) {
 
-        // Collect the supported resolutions that are at least as big as the preview Surface
+        // Collect the supported jpegOutputSizes that are at least as big as the preview Surface
         List<Size> bigEnough = new ArrayList<>();
-        // Collect the supported resolutions that are smaller than the preview Surface
+        // Collect the supported jpegOutputSizes that are smaller than the preview Surface
         List<Size> notBigEnough = new ArrayList<>();
         int w = aspectRatio.getWidth();
         int h = aspectRatio.getHeight();
@@ -55,14 +55,14 @@ public class PreviewUtil {
             return Collections.max(notBigEnough, new CompareSizesByArea());
         } else {
             Log.e("AAA", "Couldn't find any suitable preview size");
-            return choices[0];
+            return choices.get(0);
         }
     }
 
     /**
      * Compares two {@code Size}s based on their areas.
      */
-    static class CompareSizesByArea implements Comparator<Size> {
+    public static class CompareSizesByArea implements Comparator<Size> {
 
         @Override
         public int compare(Size lhs, Size rhs) {

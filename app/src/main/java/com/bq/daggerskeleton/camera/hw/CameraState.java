@@ -2,23 +2,17 @@ package com.bq.daggerskeleton.camera.hw;
 
 import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CameraDevice;
-import android.media.ImageReader;
 import android.util.Size;
 import android.view.Surface;
-
-import java.util.Arrays;
 
 public class CameraState {
     public boolean hasCameraPermission;
     public Surface previewSurface;
     public Size previewAspectRatio;
-    public String cameraId;
-    public Size[] cameraResolutionList;
-    public int rotation;
-    public ImageReader imageReader;
+    public CameraDescription cameraDescription;
     public CameraDevice cameraDevice;
+    public Surface targetSurface;
     public CameraCaptureSession cameraSession;
-    public boolean takingPhoto;
 
     public CameraState() {
 
@@ -28,13 +22,10 @@ public class CameraState {
         this.hasCameraPermission = other.hasCameraPermission;
         this.previewSurface = other.previewSurface;
         this.previewAspectRatio = other.previewAspectRatio;
-        this.cameraId = other.cameraId;
-        this.cameraResolutionList = other.cameraResolutionList;
-        this.rotation = other.rotation;
-        this.imageReader = other.imageReader;
+        this.cameraDescription = other.cameraDescription;
         this.cameraDevice = other.cameraDevice;
+        this.targetSurface = other.targetSurface;
         this.cameraSession = other.cameraSession;
-        this.takingPhoto = other.takingPhoto;
     }
 
     @Override
@@ -43,13 +34,10 @@ public class CameraState {
                 "hasCameraPermission=" + hasCameraPermission +
                 ", previewSurface=" + previewSurface +
                 ", previewAspectRatio=" + previewAspectRatio +
-                ", cameraId='" + cameraId + '\'' +
-                ", cameraResolutionList=" + Arrays.toString(cameraResolutionList) +
-                ", rotation=" + rotation +
-                ", imageReader=" + imageReader +
+                ", cameraDescription=" + cameraDescription +
                 ", cameraDevice=" + cameraDevice +
+                ", targetSurface=" + targetSurface +
                 ", cameraSession=" + cameraSession +
-                ", takingPhoto=" + takingPhoto +
                 '}';
     }
 
@@ -61,19 +49,15 @@ public class CameraState {
         CameraState that = (CameraState) o;
 
         if (hasCameraPermission != that.hasCameraPermission) return false;
-        if (rotation != that.rotation) return false;
-        if (takingPhoto != that.takingPhoto) return false;
         if (previewSurface != null ? !previewSurface.equals(that.previewSurface) : that.previewSurface != null)
             return false;
         if (previewAspectRatio != null ? !previewAspectRatio.equals(that.previewAspectRatio) : that.previewAspectRatio != null)
             return false;
-        if (cameraId != null ? !cameraId.equals(that.cameraId) : that.cameraId != null)
-            return false;
-        // Probably incorrect - comparing Object[] arrays with Arrays.equals
-        if (!Arrays.equals(cameraResolutionList, that.cameraResolutionList)) return false;
-        if (imageReader != null ? !imageReader.equals(that.imageReader) : that.imageReader != null)
+        if (cameraDescription != null ? !cameraDescription.equals(that.cameraDescription) : that.cameraDescription != null)
             return false;
         if (cameraDevice != null ? !cameraDevice.equals(that.cameraDevice) : that.cameraDevice != null)
+            return false;
+        if (targetSurface != null ? !targetSurface.equals(that.targetSurface) : that.targetSurface != null)
             return false;
         return cameraSession != null ? cameraSession.equals(that.cameraSession) : that.cameraSession == null;
 
@@ -84,13 +68,10 @@ public class CameraState {
         int result = (hasCameraPermission ? 1 : 0);
         result = 31 * result + (previewSurface != null ? previewSurface.hashCode() : 0);
         result = 31 * result + (previewAspectRatio != null ? previewAspectRatio.hashCode() : 0);
-        result = 31 * result + (cameraId != null ? cameraId.hashCode() : 0);
-        result = 31 * result + Arrays.hashCode(cameraResolutionList);
-        result = 31 * result + rotation;
-        result = 31 * result + (imageReader != null ? imageReader.hashCode() : 0);
+        result = 31 * result + (cameraDescription != null ? cameraDescription.hashCode() : 0);
         result = 31 * result + (cameraDevice != null ? cameraDevice.hashCode() : 0);
+        result = 31 * result + (targetSurface != null ? targetSurface.hashCode() : 0);
         result = 31 * result + (cameraSession != null ? cameraSession.hashCode() : 0);
-        result = 31 * result + (takingPhoto ? 1 : 0);
         return result;
     }
 }

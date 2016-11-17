@@ -22,8 +22,9 @@ public class ViewControllerPlugin extends SimplePlugin {
     private Activity activity;
 
     private FrameLayout cameraFrame;
-    private FrameLayout shutterAreaFrame;
     private FrameLayout shutterButtonFrame;
+    private FrameLayout shutterLeftFrame;
+    private FrameLayout shutterRightFrame;
 
     @Inject
     public ViewControllerPlugin(Activity activity) {
@@ -35,8 +36,9 @@ public class ViewControllerPlugin extends SimplePlugin {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         cameraFrame = (FrameLayout) this.activity.findViewById(R.id.camera_frame);
-        shutterAreaFrame = (FrameLayout) this.activity.findViewById(R.id.shutter_area_frame);
-        shutterButtonFrame = (FrameLayout) this.activity.findViewById(R.id.shutter_button_frame);
+        shutterButtonFrame = (FrameLayout) this.activity.findViewById(R.id.shutter_button_main_frame);
+        shutterLeftFrame = (FrameLayout) this.activity.findViewById(R.id.shutter_button_left_frame);
+        shutterRightFrame = (FrameLayout) this.activity.findViewById(R.id.shutter_button_right_frame);
     }
 
     public FrameLayout getCameraFrame() {
@@ -45,6 +47,14 @@ public class ViewControllerPlugin extends SimplePlugin {
 
     public FrameLayout getShutterButtonFrame() {
         return shutterButtonFrame;
+    }
+
+    public FrameLayout getShutterLeftFrame() {
+        return shutterLeftFrame;
+    }
+
+    public FrameLayout getShutterRightFrame() {
+        return shutterRightFrame;
     }
 
 

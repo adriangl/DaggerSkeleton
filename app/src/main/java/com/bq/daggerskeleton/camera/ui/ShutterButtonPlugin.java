@@ -9,8 +9,8 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.FrameLayout;
 
-import com.bq.daggerskeleton.camera.hw.CameraState;
-import com.bq.daggerskeleton.camera.hw.CameraStore;
+import com.bq.daggerskeleton.camera.photo.PhotoState;
+import com.bq.daggerskeleton.camera.photo.PhotoStore;
 import com.bq.daggerskeleton.common.Plugin;
 import com.bq.daggerskeleton.common.SimplePlugin;
 import com.bq.daggerskeleton.dagger.PluginScope;
@@ -28,7 +28,7 @@ public class ShutterButtonPlugin extends SimplePlugin implements View.OnClickLis
 
     private final Context context;
     private final ViewControllerPlugin viewControllerPlugin;
-    private final CameraStore cameraStore;
+    private final PhotoStore photoStore;
 
     private Button shutterButton;
     private FrameLayout.LayoutParams shutterButtonParams;
@@ -36,10 +36,10 @@ public class ShutterButtonPlugin extends SimplePlugin implements View.OnClickLis
     @Inject
     public ShutterButtonPlugin(Activity activity,
                                ViewControllerPlugin viewControllerPlugin,
-                               CameraStore cameraStore) {
+                               PhotoStore photoStore) {
         this.context = activity;
         this.viewControllerPlugin = viewControllerPlugin;
-        this.cameraStore = cameraStore;
+        this.photoStore = photoStore;
     }
 
     @Override
@@ -47,7 +47,7 @@ public class ShutterButtonPlugin extends SimplePlugin implements View.OnClickLis
         super.onCreate(savedInstanceState);
         shutterButton = new Button(context);
         shutterButtonParams = new FrameLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
+                300,
                 ViewGroup.LayoutParams.MATCH_PARENT);
         shutterButton.setOnClickListener(this);
     }
@@ -61,11 +61,11 @@ public class ShutterButtonPlugin extends SimplePlugin implements View.OnClickLis
     @Override
     public void onResume() {
         super.onResume();
-        track(cameraStore.flowable()
-                .subscribe(new Consumer<CameraState>() {
+        track(photoStore.flowable()
+                .subscribe(new Consumer<PhotoState>() {
                     @Override
-                    public void accept(CameraState state) throws Exception {
-                        shutterButton.setEnabled(!state.takingPhoto);
+                    public void accept(PhotoState state) throws Exception {
+                        shutterButton.setEnabled(!state.isTakingPhoto);
                     }
                 }));
     }

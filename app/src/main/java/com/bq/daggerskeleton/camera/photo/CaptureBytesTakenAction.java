@@ -1,4 +1,4 @@
-package com.bq.daggerskeleton.camera.hw;
+package com.bq.daggerskeleton.camera.photo;
 
 import com.bq.daggerskeleton.flux.Action;
 

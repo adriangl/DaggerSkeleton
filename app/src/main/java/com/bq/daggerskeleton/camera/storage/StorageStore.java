@@ -10,8 +10,8 @@ import android.provider.MediaStore;
 
 import com.bq.daggerskeleton.App;
 import com.bq.daggerskeleton.AppScope;
-import com.bq.daggerskeleton.camera.hw.CaptureBytesTakenAction;
-import com.bq.daggerskeleton.camera.hw.CaptureCompletedAction;
+import com.bq.daggerskeleton.camera.photo.CaptureBytesTakenAction;
+import com.bq.daggerskeleton.camera.photo.CaptureCompletedAction;
 import com.bq.daggerskeleton.flux.Dispatcher;
 import com.bq.daggerskeleton.flux.Store;
 

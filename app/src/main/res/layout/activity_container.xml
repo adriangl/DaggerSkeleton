@@ -10,23 +10,43 @@
         android:id="@+id/camera_frame"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        tools:background="@android:color/holo_green_dark"/>
+        tools:background="@android:color/holo_orange_dark" />
 
     <FrameLayout
         android:id="@+id/shutter_area_frame"
         android:layout_width="match_parent"
         android:layout_height="150dp"
         android:layout_gravity="bottom"
-        android:background="@android:color/holo_blue_dark">
+        android:background="@android:color/holo_green_dark">
 
-        <FrameLayout
-            android:id="@+id/shutter_button_frame"
-            android:layout_width="150dp"
-            android:layout_height="150dp"
-            android:layout_gravity="center_horizontal"
-            android:background="@android:color/darker_gray">
+        <RelativeLayout
+            android:id="@+id/shutter_area_divider_layout"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
 
-        </FrameLayout>
+            <FrameLayout
+                android:id="@+id/shutter_button_left_frame"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_toLeftOf="@+id/shutter_button_main_frame"
+                android:background="@android:color/holo_red_light" />
+
+            <FrameLayout
+                android:id="@id/shutter_button_main_frame"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:layout_centerHorizontal="true"
+                android:background="@android:color/darker_gray" />
+
+            <FrameLayout
+                android:id="@+id/shutter_button_right_frame"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_toRightOf="@id/shutter_button_main_frame"
+                android:background="@android:color/holo_blue_light" />
+
+        </RelativeLayout>
+
 
     </FrameLayout>
 
