@@ -15,8 +15,10 @@ import com.bq.daggerskeleton.camera.hw.CameraMode;
 import com.bq.daggerskeleton.camera.hw.CameraStore;
 import com.bq.daggerskeleton.camera.hw.CaptureTargetSurfaceReadyAction;
 import com.bq.daggerskeleton.camera.hw.CloseCameraAction;
+import com.bq.daggerskeleton.camera.hw.RestartCameraSessionAction;
 import com.bq.daggerskeleton.camera.rotation.RotationStore;
 import com.bq.daggerskeleton.camera.rotation.RotationUtils;
+import com.bq.daggerskeleton.camera.storage.MediaSavedAction;
 import com.bq.daggerskeleton.camera.ui.SetModeAction;
 import com.bq.daggerskeleton.camera.ui.TakePictureAction;
 import com.bq.daggerskeleton.flux.Dispatcher;
@@ -71,6 +73,15 @@ public class VideoStore extends Store<VideoState> {
                         setState(stopVideoRecording());
                         Dispatcher.dispatch(new VideoCapturedAction(outputFile));
                     }
+                }
+            }
+        });
+
+        Dispatcher.subscribe(MediaSavedAction.class, new Consumer<MediaSavedAction>() {
+            @Override
+            public void accept(MediaSavedAction mediaSavedAction) throws Exception {
+                if (isInVideoMode()) {
+                    Dispatcher.dispatch(new RestartCameraSessionAction());
                 }
             }
         });
