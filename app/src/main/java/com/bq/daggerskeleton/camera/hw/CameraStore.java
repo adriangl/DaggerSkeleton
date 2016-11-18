@@ -14,6 +14,7 @@ import com.bq.daggerskeleton.camera.InitAction;
 import com.bq.daggerskeleton.camera.permissions.PermissionChangedAction;
 import com.bq.daggerskeleton.camera.preview.CameraPreviewAvailableAction;
 import com.bq.daggerskeleton.camera.preview.CameraPreviewDestroyedAction;
+import com.bq.daggerskeleton.camera.ui.SetModeAction;
 import com.bq.daggerskeleton.flux.Dispatcher;
 import com.bq.daggerskeleton.flux.Store;
 
@@ -145,10 +146,35 @@ public class CameraStore extends Store<CameraState> {
                 setState(releaseCameraResources());
             }
         });
+
+
+        // Save current camera mode in state
+        Dispatcher.subscribe(SetModeAction.class, new Consumer<SetModeAction>() {
+            @Override
+            public void accept(SetModeAction action) throws Exception {
+                CameraState newState = new CameraState(state());
+                newState.cameraMode = action.mode;
+
+                setState(newState);
+
+                // Restart session and reload
+                Dispatcher.dispatch(new RestartCameraSessionAction());
+            }
+        });
+
+        Dispatcher.subscribe(RestartCameraSessionAction.class, new Consumer<RestartCameraSessionAction>() {
+            @Override
+            public void accept(RestartCameraSessionAction restartCameraSessionAction) throws Exception {
+                setState(releaseCameraSession(state()));
+
+                // TODO: 18/11/16 Check if we should rename/alter this action
+                Dispatcher.dispatch(new CameraDeviceOpenedAction(state().cameraDevice));
+            }
+        });
     }
 
     @Override
-    public CameraState initialState() {
+    protected CameraState initialState() {
         CameraState initialState = new CameraState();
         initialState.previewAspectRatio = PREVIEW_4_3;
         return initialState;
@@ -161,6 +187,9 @@ public class CameraStore extends Store<CameraState> {
 
             CameraState newState = new CameraState(state());
             newState.cameraDescription = CameraDescription.from(mainCameraId, cameraManager.getCameraCharacteristics(mainCameraId));
+
+            // TODO: 17/11/16 Get this from database, maybe?
+            newState.cameraMode = CameraMode.PHOTO;
 
             return newState;
 
@@ -222,27 +251,47 @@ public class CameraStore extends Store<CameraState> {
         }
     }
 
-    private CameraState releaseCameraResources() {
+    private CameraState releaseCameraSession(CameraState state) {
+        CameraState newState = new CameraState(state);
         try {
-            if (state().cameraSession != null) {
-                state().cameraSession.stopRepeating();
-                state().cameraSession.close();
+            // Release session
+            if (state.cameraSession != null) {
+                state.cameraSession.stopRepeating();
+                state.cameraSession.close();
+                newState.cameraSession = null;
             }
+            // Release target surface (ImageReader surface, MediaRecorder surface...)
+            if (state().targetSurface != null) {
+                state().targetSurface.release();
+                newState.targetSurface = null;
+            }
+        } catch (CameraAccessException | IllegalStateException e) {
+            e.printStackTrace();
+            // TODO: 17/11/16 Do something with the exception?
+        }
+        return newState;
+    }
+
+    private CameraState releaseCameraResources() {
+        CameraState newState = new CameraState(initialState());
+
+        // Release camera session
+        newState = releaseCameraSession(newState);
+
+        // Release camera device && related surfaces
+        try {
             if (state().cameraDevice != null) {
                 state().cameraDevice.close();
             }
             if (state().previewSurface != null) {
                 state().previewSurface.release();
             }
-            if (state().targetSurface != null) {
-                state().targetSurface.release();
-            }
-        } catch (CameraAccessException | IllegalStateException e) {
+        } catch (IllegalStateException e) {
             e.printStackTrace();
             // TODO: 17/11/16 Do something with the exception?
         }
 
-        CameraState newState = new CameraState(initialState());
+
         newState.hasCameraPermission = state().hasCameraPermission;
         newState.previewAspectRatio = state().previewAspectRatio;
         newState.cameraDescription = state().cameraDescription;

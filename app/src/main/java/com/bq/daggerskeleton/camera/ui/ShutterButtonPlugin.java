@@ -46,9 +46,7 @@ public class ShutterButtonPlugin extends SimplePlugin implements View.OnClickLis
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         shutterButton = new Button(context);
-        shutterButtonParams = new FrameLayout.LayoutParams(
-                300,
-                ViewGroup.LayoutParams.MATCH_PARENT);
+        shutterButtonParams = new FrameLayout.LayoutParams(300, ViewGroup.LayoutParams.MATCH_PARENT);
         shutterButton.setOnClickListener(this);
     }
 

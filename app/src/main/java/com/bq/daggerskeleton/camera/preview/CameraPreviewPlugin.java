@@ -81,9 +81,9 @@ public class CameraPreviewPlugin extends SimplePlugin {
         Size bufferPreviewSize = configureTextureView();
         Dispatcher.dispatch(
                 new CameraPreviewAvailableAction(
-                        new Surface(surface),
-                        bufferPreviewSize.getWidth(),
-                        bufferPreviewSize.getHeight()));
+                new Surface(surface),
+                bufferPreviewSize.getWidth(),
+                bufferPreviewSize.getHeight()));
     }
 
     private Size configureTextureView() {

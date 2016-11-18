@@ -6,6 +6,7 @@ import android.util.Size;
 import android.view.Surface;
 
 public class CameraState {
+    public CameraMode cameraMode;
     public boolean hasCameraPermission;
     public Surface previewSurface;
     public Size previewAspectRatio;
@@ -19,6 +20,7 @@ public class CameraState {
     }
 
     public CameraState(CameraState other) {
+        this.cameraMode = other.cameraMode;
         this.hasCameraPermission = other.hasCameraPermission;
         this.previewSurface = other.previewSurface;
         this.previewAspectRatio = other.previewAspectRatio;
@@ -31,7 +33,8 @@ public class CameraState {
     @Override
     public String toString() {
         return "CameraState{" +
-                "hasCameraPermission=" + hasCameraPermission +
+                "cameraMode=" + cameraMode +
+                ", hasCameraPermission=" + hasCameraPermission +
                 ", previewSurface=" + previewSurface +
                 ", previewAspectRatio=" + previewAspectRatio +
                 ", cameraDescription=" + cameraDescription +
@@ -49,6 +52,7 @@ public class CameraState {
         CameraState that = (CameraState) o;
 
         if (hasCameraPermission != that.hasCameraPermission) return false;
+        if (cameraMode != that.cameraMode) return false;
         if (previewSurface != null ? !previewSurface.equals(that.previewSurface) : that.previewSurface != null)
             return false;
         if (previewAspectRatio != null ? !previewAspectRatio.equals(that.previewAspectRatio) : that.previewAspectRatio != null)
@@ -65,7 +69,8 @@ public class CameraState {
 
     @Override
     public int hashCode() {
-        int result = (hasCameraPermission ? 1 : 0);
+        int result = cameraMode != null ? cameraMode.hashCode() : 0;
+        result = 31 * result + (hasCameraPermission ? 1 : 0);
         result = 31 * result + (previewSurface != null ? previewSurface.hashCode() : 0);
         result = 31 * result + (previewAspectRatio != null ? previewAspectRatio.hashCode() : 0);
         result = 31 * result + (cameraDescription != null ? cameraDescription.hashCode() : 0);

@@ -37,7 +37,7 @@ public class PhotoState {
 
     @Override
     public int hashCode() {
-        int result = imageReader != null ? imageReader.hashCode() : 0;
+        int result = (imageReader != null ? imageReader.hashCode() : 0);
         result = 31 * result + (isTakingPhoto ? 1 : 0);
         return result;
     }

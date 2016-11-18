@@ -3,6 +3,7 @@ package com.bq.daggerskeleton.camera.hw;
 import android.graphics.ImageFormat;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.params.StreamConfigurationMap;
+import android.media.MediaRecorder;
 import android.support.annotation.Nullable;
 import android.util.Size;
 
@@ -29,21 +30,24 @@ public class CameraDescription {
     public final String id;
     public final Facing facing;
     public final List<Size> jpegOutputSizes;
+    public final List<Size> mediaRecorderOutputSizes;
     public final int sensorOrientation;
 
-    public CameraDescription(String id, Facing facing, List<Size> jpegOutputSizes, int sensorOrientation) {
+    private CameraDescription(String id, Facing facing, List<Size> jpegOutputSizes, List<Size> mediaRecorderOutputSizes, int sensorOrientation) {
         this.id = id;
         this.facing = facing;
         this.jpegOutputSizes = jpegOutputSizes;
+        this.mediaRecorderOutputSizes = mediaRecorderOutputSizes;
         this.sensorOrientation = sensorOrientation;
     }
 
     public static CameraDescription from(String id, CameraCharacteristics cameraCharacteristics) {
-        List<Size> jpegResolutions = getJpegOutputSizes(cameraCharacteristics);
-        Facing facing = getCameraFacing(cameraCharacteristics);
-        int sensorOrientation = getSensorOrientation(cameraCharacteristics);
-
-        return new CameraDescription(id, facing, jpegResolutions, sensorOrientation);
+        return new CameraDescription(
+                id,
+                getCameraFacing(cameraCharacteristics),
+                getJpegOutputSizes(cameraCharacteristics),
+                getMediaRecorderOutputSizes(cameraCharacteristics),
+                getSensorOrientation(cameraCharacteristics));
     }
 
     @Override
@@ -97,6 +101,26 @@ public class CameraDescription {
         Collections.reverse(jpegResolutions);
 
         return jpegResolutions;
+    }
+
+    @Nullable
+    private static List<Size> getMediaRecorderOutputSizes(CameraCharacteristics cameraCharacteristics) {
+        // Get JPEG resolutions
+        Size[] mediaRecorderOutputSizesArray = null;
+
+        StreamConfigurationMap streamConfigurationMap = cameraCharacteristics
+                .get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+
+        if (streamConfigurationMap != null) {
+            mediaRecorderOutputSizesArray = streamConfigurationMap.getOutputSizes(MediaRecorder.class);
+        }
+        List<Size> mediaRecorderOutputSizesList = Arrays.asList(mediaRecorderOutputSizesArray);
+
+        // Sort by descending area size
+        Collections.sort(mediaRecorderOutputSizesList, new PreviewUtil.CompareSizesByArea());
+        Collections.reverse(mediaRecorderOutputSizesList);
+
+        return mediaRecorderOutputSizesList;
     }
 
     private static Facing getCameraFacing(CameraCharacteristics cameraCharacteristics) {
