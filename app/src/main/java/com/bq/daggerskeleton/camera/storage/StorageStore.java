@@ -2,7 +2,6 @@ package com.bq.daggerskeleton.camera.storage;
 
 import android.content.ContentResolver;
 import android.content.ContentValues;
-import android.graphics.BitmapFactory;
 import android.hardware.camera2.TotalCaptureResult;
 import android.net.Uri;
 import android.os.Environment;
@@ -12,10 +11,12 @@ import com.bq.daggerskeleton.App;
 import com.bq.daggerskeleton.AppScope;
 import com.bq.daggerskeleton.camera.photo.CaptureBytesTakenAction;
 import com.bq.daggerskeleton.camera.photo.CaptureCompletedAction;
+import com.bq.daggerskeleton.camera.video.VideoCapturedAction;
 import com.bq.daggerskeleton.flux.Dispatcher;
 import com.bq.daggerskeleton.flux.Store;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
@@ -36,8 +37,11 @@ import io.reactivex.schedulers.Schedulers;
 @AppScope
 public class StorageStore extends Store<StorageState> {
 
-    private static final SimpleDateFormat fileNameDateFormat =
+    private static final SimpleDateFormat FILE_NAME_DATE_FORMAT =
             new SimpleDateFormat("yyyyMMdd_HHmmss_SSS", Locale.getDefault());
+
+    private static final String IMAGE_FILE_FORMAT = "IMG_%s.jpg";
+    private static final String VIDEO_FILE_FORMAT = "VID_%s.jpg";
 
     private final File cameraFilesRootDirectory;
     private final ContentResolver contentResolver;
@@ -73,10 +77,17 @@ public class StorageStore extends Store<StorageState> {
             }
         });
 
-        Dispatcher.subscribe(CaptureSavedAction.class, new Consumer<CaptureSavedAction>() {
+        Dispatcher.subscribe(MediaSavedAction.class, new Consumer<MediaSavedAction>() {
             @Override
-            public void accept(CaptureSavedAction action) throws Exception {
+            public void accept(MediaSavedAction action) throws Exception {
                 setState(initialState());
+            }
+        });
+
+        Dispatcher.subscribe(VideoCapturedAction.class, new Consumer<VideoCapturedAction>() {
+            @Override
+            public void accept(VideoCapturedAction action) throws Exception {
+                tryToSaveVideo(action.outputFile);
             }
         });
     }
@@ -103,17 +114,53 @@ public class StorageStore extends Store<StorageState> {
                 .subscribe(new Consumer<String>() {
                     @Override
                     public void accept(String s) throws Exception {
-                        Dispatcher.dispatch(new CaptureSavedAction(s));
+                        Dispatcher.dispatch(new MediaSavedAction(s));
                     }
                 });
     }
 
+    private void tryToSaveVideo(final File outputFile) {
+        if (outputFile == null) return;
+
+        Single.create(new SingleOnSubscribe<String>() {
+            @Override
+            public void subscribe(SingleEmitter<String> e) throws Exception {
+                try {
+                    String fileUri = storeVideo(outputFile);
+                    e.onSuccess(fileUri);
+                } catch (Exception ex) {
+                    e.onError(ex);
+                }
+            }
+        })
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribeOn(Schedulers.io())
+                .subscribe(new Consumer<String>() {
+                    @Override
+                    public void accept(String s) throws Exception {
+                        Dispatcher.dispatch(new MediaSavedAction(s));
+                    }
+                });
+
+    }
+
     private String storeImage(byte[] pendingCaptureBytes, TotalCaptureResult pendingCaptureTotalResult) throws IOException {
-        String date = fileNameDateFormat.format(new Date());
-        File outputFile = new File(cameraFilesRootDirectory, String.format("IMG_%s.jpg", date));
+        String date = FILE_NAME_DATE_FORMAT.format(new Date());
+        File outputFile = new File(cameraFilesRootDirectory, String.format(IMAGE_FILE_FORMAT, date));
 
         saveRawImageToDisk(pendingCaptureBytes, outputFile, pendingCaptureTotalResult);
         return addImageToMediaStore(outputFile, pendingCaptureTotalResult);
+    }
+
+    private String storeVideo(File outputFile) {
+        // Move file to proper file path
+        String date = FILE_NAME_DATE_FORMAT.format(new Date());
+        File renamedFile = new File(cameraFilesRootDirectory, String.format(VIDEO_FILE_FORMAT, date));
+
+        // Be careful, this will only work in the same volume (SD to SD, phone to phone); else a
+        // copy-and-delete action is needed
+        outputFile.renameTo(renamedFile);
+        return addVideoToMediaStore(renamedFile);
     }
 
     private void saveRawImageToDisk(byte[] data, File output, TotalCaptureResult totalCaptureResult) throws IOException {
@@ -125,7 +172,10 @@ public class StorageStore extends Store<StorageState> {
     }
 
     private String addImageToMediaStore(File output, TotalCaptureResult pendingCaptureTotalResult) {
+
+
         // Get image width & height
+        /*
         BitmapFactory.Options options = new BitmapFactory.Options();
         options.inJustDecodeBounds = true;
         BitmapFactory.decodeFile(output.getAbsolutePath(), options);
@@ -141,9 +191,25 @@ public class StorageStore extends Store<StorageState> {
         // TODO: 16/11/16 Add values from pendingCaptureTotalResult to add it to Media Store
 
         Uri fileUri = contentResolver.insert(MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
+        */
 
-        if (fileUri != null) {
-            return fileUri.toString();
+        try {
+            String fileUri = MediaStore.Images.Media.insertImage(contentResolver, output.getAbsolutePath(), output.getName(), null);
+            return fileUri;
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    private String addVideoToMediaStore(File output) {
+        ContentValues values = new ContentValues();
+        values.put(MediaStore.Video.Media.TITLE, output.getName());
+        values.put(MediaStore.Video.Media.MIME_TYPE, "video/mp4");
+        values.put(MediaStore.Video.Media.DATA, output.getAbsolutePath());
+        Uri uri = contentResolver.insert(MediaStore.Video.Media.EXTERNAL_CONTENT_URI, values);
+        if (uri != null) {
+            return uri.toString();
         } else {
             return null;
         }

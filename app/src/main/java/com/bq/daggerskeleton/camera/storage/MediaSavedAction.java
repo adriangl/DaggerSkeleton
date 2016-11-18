@@ -2,10 +2,10 @@ package com.bq.daggerskeleton.camera.storage;
 
 import com.bq.daggerskeleton.flux.Action;
 
-public class CaptureSavedAction implements Action {
+public class MediaSavedAction implements Action {
     public final String newFileUri;
 
-    public CaptureSavedAction(String newFileUri) {
+    public MediaSavedAction(String newFileUri) {
         this.newFileUri = newFileUri;
     }
 

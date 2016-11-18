@@ -39,10 +39,17 @@ public class VideoStore extends Store<VideoState> {
     private final CameraStore cameraStore;
     private final RotationStore rotationStore;
 
+    private final File outputFile;
+
     @Inject
     public VideoStore(final CameraStore cameraStore, RotationStore rotationStore) {
         this.cameraStore = cameraStore;
         this.rotationStore = rotationStore;
+
+        outputFile = new File(
+                Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM),
+                ".video.mp4");
+        outputFile.getParentFile().mkdirs();
 
         Dispatcher.subscribe(CameraDeviceOpenedAction.class, new Consumer<CameraDeviceOpenedAction>() {
             @Override
@@ -54,28 +61,6 @@ public class VideoStore extends Store<VideoState> {
             }
         });
 
-        /*
-        Dispatcher.subscribe(StartVideoRecordingAction.class, new Consumer<StartVideoRecordingAction>() {
-            @Override
-            public void accept(StartVideoRecordingAction action) throws Exception {
-                if (isInVideoMode()) {
-                    setState(startVideoRecording());
-                }
-            }
-        });
-
-        Dispatcher.subscribe(StopVideoRecordingAction.class, new Consumer<StopVideoRecordingAction>() {
-            @Override
-            public void accept(StopVideoRecordingAction captureSavedAction) throws Exception {
-                if (isInVideoMode()) {
-                    setState(stopMediaRecorder());
-                }
-
-                // TODO: 18/11/16 Report file saved
-            }
-        });
-        */
-
         Dispatcher.subscribe(TakePictureAction.class, new Consumer<TakePictureAction>() {
             @Override
             public void accept(TakePictureAction action) throws Exception {
@@ -84,6 +69,7 @@ public class VideoStore extends Store<VideoState> {
                         setState(startVideoRecording());
                     } else {
                         setState(stopVideoRecording());
+                        Dispatcher.dispatch(new VideoCapturedAction(outputFile));
                     }
                 }
             }
@@ -114,11 +100,7 @@ public class VideoStore extends Store<VideoState> {
         VideoState newState = new VideoState(state());
 
         try {
-            File outputFile = new File(
-                    Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DCIM),
-                    "video.mp4");
-            outputFile.mkdirs();
-
+            // TODO: 18/11/16 Media configuration should be extracted from another class; besides when changing those values, the MediaRecorder must be recreated
             MediaRecorder mediaRecorder = new MediaRecorder();
 
             mediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
@@ -163,11 +145,11 @@ public class VideoStore extends Store<VideoState> {
         if (cameraStore.state().previewSurface == null) return state();
 
         try {
-
             // Stop current camera session request and create a new one for record
             cameraStore.state().cameraSession.stopRepeating();
 
-            CaptureRequest.Builder builder = cameraStore.state().cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_RECORD);
+            CaptureRequest.Builder builder = cameraStore.state().cameraDevice
+                    .createCaptureRequest(CameraDevice.TEMPLATE_RECORD);
             builder.addTarget(cameraStore.state().previewSurface);
             builder.addTarget(cameraStore.state().targetSurface);
 

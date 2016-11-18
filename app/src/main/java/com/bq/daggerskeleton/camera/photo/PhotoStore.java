@@ -22,7 +22,7 @@ import com.bq.daggerskeleton.camera.hw.CaptureTargetSurfaceReadyAction;
 import com.bq.daggerskeleton.camera.hw.CloseCameraAction;
 import com.bq.daggerskeleton.camera.rotation.RotationStore;
 import com.bq.daggerskeleton.camera.rotation.RotationUtils;
-import com.bq.daggerskeleton.camera.storage.CaptureSavedAction;
+import com.bq.daggerskeleton.camera.storage.MediaSavedAction;
 import com.bq.daggerskeleton.camera.ui.SetModeAction;
 import com.bq.daggerskeleton.camera.ui.TakePictureAction;
 import com.bq.daggerskeleton.flux.Dispatcher;
@@ -71,9 +71,9 @@ public class PhotoStore extends Store<PhotoState> {
             }
         });
 
-        Dispatcher.subscribe(CaptureSavedAction.class, new Consumer<CaptureSavedAction>() {
+        Dispatcher.subscribe(MediaSavedAction.class, new Consumer<MediaSavedAction>() {
             @Override
-            public void accept(CaptureSavedAction captureSavedAction) throws Exception {
+            public void accept(MediaSavedAction mediaSavedAction) throws Exception {
                 if (isInPhotoMode()) {
                     PhotoState newState = new PhotoState(state());
                     newState.isTakingPhoto = false;
